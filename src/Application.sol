@@ -10,7 +10,6 @@ pragma experimental ABIEncoderV2;
 contract Application {
   /// @dev structure to contain details about users for verification.
   struct User {
-    address userId;
     bool hasBought;
   }
   /// @dev structure to store all the details about the product 
@@ -52,10 +51,10 @@ contract Application {
   /// @param listingID Unique Id for the listing
   /// @param itemName Name of the item
   /// @param uniqueSellerID The seller ID
-  event ListingCreated (
-    uint indexed listingID,
-    string itemName,
-    address uniqueSellerID
+  event PurchaseMade (
+    address buyer,
+    address developerID,
+    address appName
   );
 
   /// @notice Function called by the buyer to make a bid.
@@ -64,10 +63,11 @@ contract Application {
   function buy(address payable buyer) returns (string memory filePtr) 
     public payable 
   {
-    if(msg.value == details.developerCut) {
-      users[buyer] = User({ buyer, true });
+    if(msg.value == details.price) {
+      users[buyer] = User({ true });
       // Passing on the price to the developer.
       developerID.transfer(details.developerCut);
+      emit PurchaseMade(buyer, details.developerID, details.appName);
       return filePtr;
     } else {
       // Return the amount if incorrect
@@ -76,7 +76,7 @@ contract Application {
   }
 
   /// @notice Fetches the details of the auction.
-  /// @return details structure of the cnotract.
+  /// @return details structure of the contract.
   function fetchDetails() public view returns (Details memory) {
     return details;
   }

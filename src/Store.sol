@@ -30,6 +30,7 @@ contract Store {
 
     /// @dev mapping for all the applications
     mapping(uint256 => AppDetails) private applications;
+    /// @dev list of all the hash of the files so far.
     mapping(bytes32 => bool) private hashList;
 
     /// @notice Triggered to store the details of a listing on transaction logs
@@ -78,6 +79,7 @@ contract Store {
           appName, appDesc, price, developerID, filePtr, developerCut)
       );
       appCount += 1;
+      hashList[id] = true;
 
       emit ListingCreated(id, appName, price, msg.sender);
     }
