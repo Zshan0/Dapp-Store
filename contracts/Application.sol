@@ -32,6 +32,8 @@ contract Application {
   /// @param _appDesc Description of the application.
   /// @param _price Price of the application.
   /// @param _developerID address for payment.
+  /// @param _filePtr pointer to BitTorrent seed
+  /// @param _developerCut percentage of proceeds going to developer
   constructor(
     string memory _appName,
     string memory _appDesc,
