@@ -13,8 +13,8 @@ function Navigation() {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
             <Nav.Link href="/dashboard">Dashboard</Nav.Link>
-            <Nav.Link href="/marketplace">Store</Nav.Link>
-            <Nav.Link href="/create-listing">Create App</Nav.Link>
+            <Nav.Link href="/dappstore">Store</Nav.Link>
+            <Nav.Link href="/create-application">Create App</Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>

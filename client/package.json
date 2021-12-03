@@ -4,7 +4,8 @@
   "private": true,
   "dependencies": {
     "eth-crypto": "^2.1.0",
-    "react": "16.11.0",
+    "react": "^17.0.2",
+    "react-bootstrap": "^2.0.3",
     "react-dom": "16.11.0",
     "react-loading": "^2.0.3",
     "react-router-dom": "^6.0.2",

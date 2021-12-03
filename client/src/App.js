@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ReactLoading from 'react-loading';
 import './css/App.css';
 
@@ -59,8 +59,9 @@ class App extends Component {
 
     // Return router-dom and default page, and forward contracts and accounts as parameters to auction pages
     return (
-      <Router className="">
+      <BrowserRouter className="bgcolor">
         <Navigation />
+        <Routes>
           <Route path="/" exact component={Home} />
           <Route
             path="/dashboard"
@@ -92,7 +93,8 @@ class App extends Component {
               />
             )}
           />
-      </Router>
+        </Routes>
+      </BrowserRouter>
     );
   }
 }
