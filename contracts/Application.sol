@@ -24,7 +24,7 @@ contract Application {
   }
   Details public details;
 
-  mapping(address payable => User) public users;
+  mapping(address => User) public users;
 
   /// @notice Constructor for the auction. 
   /// @dev Triggers event for logs.
@@ -39,9 +39,9 @@ contract Application {
     string memory _appDesc,
     uint256 _price,
     address payable _developerID,
-    string _filePtr,
+    string memory _filePtr,
     uint256 _developerCut
-  ) internal {
+  ) public {
     details.appName = _appName;
     details.appDesc = _appDesc;
     details.price = _price;
@@ -50,25 +50,24 @@ contract Application {
     details.developerCut = _developerCut;
   }
   /// @notice Triggered to store the details of a listing on transaction logs
-  /// @param listingID Unique Id for the listing
-  /// @param itemName Name of the item
-  /// @param uniqueSellerID The seller ID
+  /// @param buyer address of the application buyer
+  /// @param developerID address of the application developer
+  /// @param appName name of the application
   event PurchaseMade (
     address buyer,
     address developerID,
-    address appName
+    string appName
   );
 
-  /// @notice Function called by the buyer to make a bid.
+  /// @notice Function called by the buyer to purchase an application.
   /// @param buyer address of the buyer.
-  /// @returns filePtr if the transaction is successful, else empty string.
-  function buy(address payable buyer) returns (string memory filePtr) 
-    public payable 
+  /// @return filePtr if the transaction is successful, else empty string.
+  function buy(address payable buyer) public payable returns (string memory filePtr)  
   {
     if(msg.value == details.price) {
-      users[buyer] = User({ true });
+      users[buyer] = User({ hasBought: true});
       // Passing on the price to the developer.
-      developerID.transfer(details.developerCut);
+      details.developerID.transfer(details.developerCut);
       emit PurchaseMade(buyer, details.developerID, details.appName);
       return filePtr;
     } else {

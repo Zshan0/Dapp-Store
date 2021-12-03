@@ -10,7 +10,6 @@ import Home from "./components/Home";
 import Navigation from "./components/Navigation";
 
 
-import ApplicationABI from "./contracts/Application.json";
 import StoreABI from "./contracts/Store.json";
 import getWeb3 from "./getWeb3";
 
@@ -26,14 +25,8 @@ class App extends Component {
       // Use web3 to get the user's accounts.
       const accounts = await web3.eth.getAccounts();
 
-      // Get the application contract instance.
-      const networkId = await web3.eth.net.getId();
-      const applicationNetwork = ApplicationABI.networks[networkId];
-      const applicationInstance = new web3.eth.Contract(
-        ApplicationABI.abi,
-        applicationNetwork && applicationNetwork.address
-      );
       // Get the store contract instance.
+      const networkId = await web3.eth.net.getId();
       const storeNetwork = StoreABI.networks[networkId];
       const storeInstance = new web3.eth.Contract(
         StoreABI.abi,
@@ -46,7 +39,6 @@ class App extends Component {
         web3,
         accounts,
         contract: {
-          application : applicationInstance,
           store: storeInstance,
         },
       });

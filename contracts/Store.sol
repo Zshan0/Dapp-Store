@@ -2,7 +2,7 @@
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
-import {Application} from "./Application.sol"
+import {Application} from "./Application.sol";
 
 /// @title App store
 /// @author Aakash Jain, Ishaan Shah, Zeeshan Ahmed
@@ -23,7 +23,7 @@ contract Store {
       uint256 price;
       address payable developerID;
       uint256 downloads;
-      bytes32 fileHash;
+      uint256 fileHash;
       Application applicationContract;
     }
     uint appCount;
@@ -31,7 +31,7 @@ contract Store {
     /// @dev mapping for all the applications
     mapping(uint256 => AppDetails) private applications;
     /// @dev list of all the hash of the files so far.
-    mapping(bytes32 => bool) private hashList;
+    mapping(uint256 => bool) private hashList;
 
     /// @notice Triggered to store the details of a listing on transaction logs
     /// @param listingID Unique ID for the application.
@@ -64,10 +64,13 @@ contract Store {
         return;
       }
       // generating a new random id.
-      uint id = (keccak256(abi.encodePacked(
-                block.difficulty, block.timestamp, players)));
+      //uint256 id = (keccak256(abi.encodePacked(
+      //          block.difficulty, block.timestamp)));
+      
+      // TMP EXPERIMENTAL ID GEN
+      uint256 id = 0;
       // storing the newly created application in the map.
-      listings[id] = Listing(
+      applications[id] = AppDetails(
         id,
         appName,
         appDesc,
@@ -76,29 +79,29 @@ contract Store {
         0,
         fileHash,
         new Application(
-          appName, appDesc, price, developerID, filePtr, developerCut)
+          appName, appDesc, price, msg.sender, filePtr, developerCut)
       );
       appCount += 1;
       hashList[id] = true;
 
-      emit ListingCreated(id, appName, price, msg.sender);
+      emit ApplicationAdded(id, appName, price, msg.sender);
     }
 
 
     /// @notice Function to fetch details on all the apps on the store.
-    /// @return Application The list of all apps with support.
     /// @param itemId The itemId of the required app.
-    function fetchApp(uint itemId) public view returns (Application memory) {
-      return applications[itemId];
+    /// @return Application The list of all apps with support.
+    function fetchApp(uint itemId) public view returns (Application) {
+      return applications[itemId].applicationContract;
     }
 
     /// @notice Function to buy a listing and accepts the money to store in the contract
     /// @dev Triggers the event for logging
     /// @param itemId The item the buyer wants to buy
-    function buyApp(uint itemId) external payable return (string memory){
+    function buyApp(uint itemId) external payable returns (string memory){
       // transferring the funds to the contract which deals with
       // the particular app.
-      return applications[itemId].buy.value(msg.value)(msg.sender);
+      return applications[itemId].applicationContract.buy.value(msg.value)(msg.sender);
     }
 
     /// @notice Verifies if the user has purchased required app.
@@ -108,7 +111,7 @@ contract Store {
     function checkPurchased(uint256 appId, address user) 
       public view returns (bool) 
     {
-        return applications[appId].checkPurchased(user);
+        return applications[appId].applicationContract.checkPurchased(user);
     }
 
 }
