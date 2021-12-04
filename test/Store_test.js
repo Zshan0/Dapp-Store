@@ -132,6 +132,42 @@ contract("DappStore", (accounts) => {
     assert.equal(listing.downloads,1);
   });
 
+  it("Checks if purchase occurs for correct amount only", async () => {
+
+    await dappStore.createAppListing(
+        newApplication.name,
+        newApplication.description,
+        newApplication.price,
+        newApplication.filePtr,
+        newApplication.developerCut,
+        newApplication.encFileData,
+        { from: accounts[1]}
+    );
+    
+    const listings = await dappStore.fetchAllApps();
+    assert.equal(newApplication.name, listings[0].appName);
+    assert.equal(newApplication.description, listings[0].appDesc);
+    assert.equal(newApplication.price, listings[0].price);
+
+    try {
+      await dappStore.buyApp(0, {
+        from: accounts[2],
+        value: newApplication.price + 1
+      });
+      throw error;
+    } catch(error) {
+      assert(error, "Expected an error but did not get one");
+      assert(
+        error.message.startsWith(
+          "Returned error: VM Exception while processing transaction: revert Incorrect value provided"
+        ),
+        "Expected an error 'Incorrect value provided' but got '" +
+          error.message +
+          "' instead"
+      );
+    }
+  });
+
   it("Checks if applications can be transferred", async () => {
 
     await dappStore.createAppListing(

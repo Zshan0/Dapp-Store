@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
@@ -9,11 +8,8 @@ import {Application} from "./Application.sol";
 /// @notice View, sell, and buy applications
 contract Store {
 
-    struct Purchase {
-        address payable user;
-    }
-
-    /// @dev Stores the details of an application
+    /// @notice Stores the details of an application
+    /// @dev Stores an application contract instance
     struct AppDetails {
         uint256 listingID;
         string appName;
@@ -24,11 +20,13 @@ contract Store {
         bytes32 fileHash;
         Application applicationContract;
     }
+
     uint256 appCount;
     address payable public owner;
 
     /// @dev mapping for all the applications
     mapping(uint256 => AppDetails) private applications;
+
     /// @dev list of all the hash of the files so far.
     mapping(bytes32 => bool) private hashList;
 
@@ -45,7 +43,7 @@ contract Store {
     );
 
 
-    /// @notice Constructor to define the marketplace owner
+    /// @notice Constructor to define the marketplace owner when initialized
     constructor() public {
         owner = msg.sender;
     }
@@ -87,19 +85,23 @@ contract Store {
                 developerCut
             )
         );
+        // Updating the hashlist with the fileHash in order to prevent overwriting
         hashList[fileHash] = true;
         emit ApplicationAdded(appCount, appName, price, msg.sender);
         appCount += 1;
     }
 
     /// @notice Function to return all applications in the store
+    /// @return List of application details of all apps in the store
     function fetchAllApps() public view returns (AppDetails[] memory) {
-        AppDetails[] memory items = new AppDetails[](appCount);
-        for (uint256 i = 0; i < appCount; i++) {
-            AppDetails memory currentItem = applications[i];
-            items[i] = currentItem;
+        if(appCount > 0) {
+            AppDetails[] memory items = new AppDetails[](appCount);
+            for (uint256 i = 0; i < appCount; i++) {
+                AppDetails memory currentItem = applications[i];
+                items[i] = currentItem;
+            }
+            return items;
         }
-        return items;
     }
 
     /// @notice Function to fetch details on all the apps on the store.
@@ -113,9 +115,8 @@ contract Store {
     /// @dev Triggers the event for logging
     /// @param itemId The item the buyer wants to buy
     function buyApp(uint256 itemId) external payable {
-        // transferring the funds to the contract which deals with
-        // the particular app.
-        require(applications[itemId].price == msg.value, "Correct value provided");
+        // transferring the funds to the contract which deals with the particular app.
+        require(applications[itemId].price == msg.value, "Incorrect value provided");
         applications[itemId].applicationContract.buy.value(msg.value)(
                  msg.sender
              );

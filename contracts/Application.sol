@@ -1,5 +1,3 @@
-// pragma solidity >0.4.23 <0.7.0;
-
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
@@ -8,10 +6,12 @@ pragma experimental ABIEncoderV2;
 /// @notice Do not deploy
 /// @dev Parent class for the other contracts.
 contract Application {
+
   /// @dev structure to contain details about users for verification.
   struct User {
     bool hasBought;
   }
+
   /// @dev structure to store all the details about the product 
   struct Details {
     string appName;
@@ -24,9 +24,10 @@ contract Application {
   }
   Details public details;
 
+  /// @dev mapping of all addresses that have purchased the application  
   mapping(address => User) public users;
 
-  /// @notice Constructor for the auction. 
+  /// @notice Constructor for the application instance. 
   /// @dev Triggers event for logs.
   /// @param _appName Name of the application.
   /// @param _appDesc Description of the application.
@@ -50,6 +51,7 @@ contract Application {
     details.developerCut = _developerCut;
     details.downloads = 0;
   }
+  
   /// @notice Triggered to store the details of a listing on transaction logs
   /// @param buyer address of the application buyer
   /// @param developerID address of the application developer
