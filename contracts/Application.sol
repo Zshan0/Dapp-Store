@@ -48,6 +48,7 @@ contract Application {
     details.developerID = _developerID;
     details.filePtr = _filePtr;
     details.developerCut = _developerCut;
+    details.downloads = 0;
   }
   /// @notice Triggered to store the details of a listing on transaction logs
   /// @param buyer address of the application buyer
@@ -62,21 +63,16 @@ contract Application {
   /// @notice Function called by the buyer to purchase an application.
   /// @param buyer address of the buyer.
   /// @return filePtr if the transaction is successful, else empty string.
-  function buy(address payable buyer) public payable returns (string memory filePtr)  
+  function buy(address payable buyer) public payable 
   {
-    if(msg.value == details.price) {
       users[buyer] = User({ hasBought: true});
       // Passing on the price to the developer.
       details.developerID.transfer(details.developerCut);
       emit PurchaseMade(buyer, details.developerID, details.appName);
-      return filePtr;
-    } else {
-      // Return the amount if incorrect
-      buyer.transfer(msg.value);
-    }
+      details.downloads += 1;
   }
 
-  /// @notice Fetches the details of the auction.
+  /// @notice Fetches the details of the application.
   /// @return details structure of the contract.
   function fetchDetails() public view returns (Details memory) {
     return details;
@@ -87,6 +83,12 @@ contract Application {
   /// @return If the user has purchased the app.
   function checkPurchased(address user) public view returns (bool) {
     return users[user].hasBought;
+  }
+
+  /// @notice Fetches the file pointer to the application
+  /// @return returns filePtr of the application
+  function getFilePtr() public view returns (string memory) {
+    return details.filePtr;
   }
 
   /// @notice Transfers the ownership of app to the new address

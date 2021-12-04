@@ -7,43 +7,48 @@ import {Application} from "./Application.sol";
 /// @title App store
 /// @author Aakash Jain, Ishaan Shah, Zeeshan Ahmed
 /// @notice View, sell, and buy applications
-/// @dev 
 contract Store {
 
-    /// @dev 
     struct Purchase {
-      address payable user;
+        address payable user;
     }
 
-    /// @dev Stores the details of an application 
+    /// @dev Stores the details of an application
     struct AppDetails {
-      uint listingID;
-      string appName;
-      string appDesc;
-      uint256 price;
-      address payable developerID;
-      uint256 downloads;
-      uint256 fileHash;
-      Application applicationContract;
+        uint256 listingID;
+        string appName;
+        string appDesc;
+        uint256 price;
+        address payable developerID;
+        uint256 downloads;
+        bytes32 fileHash;
+        Application applicationContract;
     }
-    uint appCount;
+    uint256 appCount;
+    address payable public owner;
 
     /// @dev mapping for all the applications
     mapping(uint256 => AppDetails) private applications;
     /// @dev list of all the hash of the files so far.
-    mapping(uint256 => bool) private hashList;
+    mapping(bytes32 => bool) private hashList;
 
     /// @notice Triggered to store the details of a listing on transaction logs
     /// @param listingID Unique ID for the application.
     /// @param appName Name of the appplication.
     /// @param price Price set by the developer.
     /// @param developerID Address of the developer for transferring funds.
-    event ApplicationAdded (
-      uint indexed listingID,
-      string appName,
-      uint price,
-      address developerID
+    event ApplicationAdded(
+        uint256 indexed listingID,
+        string appName,
+        uint256 price,
+        address developerID
     );
+
+
+    /// @notice Constructor to define the marketplace owner
+    constructor() public {
+        owner = msg.sender;
+    }
 
     /// @notice Function to add application to the app store.
     /// @dev Triggers the event for logging
@@ -53,66 +58,101 @@ contract Store {
     /// @param filePtr The pointer which will allow user to download the app.
     /// @param developerCut Value which will be transferred to the developer.
     function createAppListing(
-      string memory appName,
-      string memory appDesc,
-      uint256 price,
-      string memory filePtr,
-      uint256 developerCut,
-      uint256 fileHash
+        string memory appName,
+        string memory appDesc,
+        uint256 price,
+        string memory filePtr,
+        uint256 developerCut,
+        bytes32 fileHash
     ) public payable {
-      if(hashList[fileHash]) {
-        return;
-      }
-      // generating a new random id.
-      //uint256 id = (keccak256(abi.encodePacked(
-      //          block.difficulty, block.timestamp)));
-      
-      // TMP EXPERIMENTAL ID GEN
-      uint256 id = 0;
-      // storing the newly created application in the map.
-      applications[id] = AppDetails(
-        id,
-        appName,
-        appDesc,
-        price,
-        msg.sender,
-        0,
-        fileHash,
-        new Application(
-          appName, appDesc, price, msg.sender, filePtr, developerCut)
-      );
-      appCount += 1;
-      hashList[id] = true;
-
-      emit ApplicationAdded(id, appName, price, msg.sender);
+        if (hashList[fileHash]) {
+            return;
+        }
+        
+        // storing the newly created application in the map.
+        applications[appCount] = AppDetails(
+            appCount,
+            appName,
+            appDesc,
+            price,
+            msg.sender,
+            0,
+            fileHash,
+            new Application(
+                appName,
+                appDesc,
+                price,
+                msg.sender,
+                filePtr,
+                developerCut
+            )
+        );
+        hashList[fileHash] = true;
+        emit ApplicationAdded(appCount, appName, price, msg.sender);
+        appCount += 1;
     }
 
+    /// @notice Function to return all applications in the store
+    function fetchAllApps() public view returns (AppDetails[] memory) {
+        AppDetails[] memory items = new AppDetails[](appCount);
+        for (uint256 i = 0; i < appCount; i++) {
+            AppDetails memory currentItem = applications[i];
+            items[i] = currentItem;
+        }
+        return items;
+    }
 
     /// @notice Function to fetch details on all the apps on the store.
     /// @param itemId The itemId of the required app.
     /// @return Application The list of all apps with support.
-    function fetchApp(uint itemId) public view returns (Application) {
-      return applications[itemId].applicationContract;
+    function fetchApp(uint256 itemId) public view returns (AppDetails memory) {
+        return applications[itemId];
     }
 
     /// @notice Function to buy a listing and accepts the money to store in the contract
     /// @dev Triggers the event for logging
     /// @param itemId The item the buyer wants to buy
-    function buyApp(uint itemId) external payable returns (string memory){
-      // transferring the funds to the contract which deals with
-      // the particular app.
-      return applications[itemId].applicationContract.buy.value(msg.value)(msg.sender);
+    function buyApp(uint256 itemId) external payable {
+        // transferring the funds to the contract which deals with
+        // the particular app.
+        require(applications[itemId].price == msg.value, "Correct value provided");
+        applications[itemId].applicationContract.buy.value(msg.value)(
+                 msg.sender
+             );
+        applications[itemId].downloads += 1;
+    }
+
+    /// @notice Function to get the file pointer of the application
+    /// @dev Should verify that the user calling the function has purchased the application
+    /// @param itemId Id of the app that is being called
+    /// @return Returns the application file pointer
+    function getApplicationFile(uint256 itemId) public view returns (string memory) {
+        if(checkPurchased(itemId, msg.sender)) {
+            return applications[itemId].applicationContract.getFilePtr();
+        }
     }
 
     /// @notice Verifies if the user has purchased required app.
     /// @param appId Id of the app which is being checked.
     /// @param user Address of the user that needs verification.
     /// @return If the user has purchased the app.
-    function checkPurchased(uint256 appId, address user) 
-      public view returns (bool) 
-    {
+    function checkPurchased(uint256 appId, address user) public view returns (bool) {
         return applications[appId].applicationContract.checkPurchased(user);
     }
 
-}
+    /// @notice Transfers the owner of the purchased application
+    /// @param itemId Id of the app which is being transferred
+    /// @param newAddress new address of the user wanting to transfer the app
+    function transferApplicationOwner(uint256 itemId, address payable newAddress) public payable {
+        if(checkPurchased(itemId, msg.sender)) {
+            applications[itemId].applicationContract.transferOwner(msg.sender, newAddress);
+        }
+    }
 
+    /// @notice Function that clears the marketplace
+    /// @dev Useful for testing
+    function killStore() external {
+        require(msg.sender == owner, "Only the owner can kill the marketplace");
+        selfdestruct(owner);
+    }
+}
